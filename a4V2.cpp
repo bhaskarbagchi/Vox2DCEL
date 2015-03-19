@@ -1,8 +1,3 @@
-#include <iostream>
-#include <vector>
-#include <cstdio>
-#include <algorithm>
-#include <climits>
 #include <bits/stdc++.h>
 
 #define pb push_back
@@ -49,7 +44,6 @@ VVPoint3D conVoxels;
 
 void input(){
 	voxels.clear();
-
 	Point3D tmp;
 	int n;
 	scanf("%d",&n);
@@ -68,7 +62,6 @@ void connectVoxels() {
 		voxelMap[voxels[i]] = i;
 	}
 	for (int i = 0; i < sz; ++i) {
-		// cout<<"Voxel "<<i<<" visited = "<<voxelVisited[voxels[i]]<<endl;
 		if(!voxelVisited[voxels[i]]) {
 			//BFS
 			vector<Point3D> v;
@@ -77,9 +70,7 @@ void connectVoxels() {
 			voxelVisited[voxels[i]] = true;
 			while(!q.empty()) {
 				Point3D p = voxels[q.front()];
-				// cout<<q.front()<<endl;
 				v.push_back(p);
-				// voxelVisited[p] = true;
 				q.pop();
 				if(voxelMap.find(Point3D(p.x-1, p.y, p.z)) != voxelMap.end() && !voxelVisited[Point3D(p.x-1, p.y, p.z)]) {
 					q.push(voxelMap[Point3D(p.x-1, p.y, p.z)]);
@@ -109,16 +100,6 @@ void connectVoxels() {
 			conVoxels.push_back(v);
 		}
 	}
-	// for(int i = 0; i < conVoxels.size(); i++) {
-	// 	cout<<"Connected Component #"<<i+1<<" : "<<endl;
-	// 	for(int j = 0; j < conVoxels[i].size(); j++) {
-	// 		cout<<conVoxels[i][j].x<<" "<<conVoxels[i][j].y<<" "<<conVoxels[i][j].z<<endl;
-	// 	}
-	// }
-	// cout<<"No. of connected components = "<<conVoxels.size()<<endl;
-	// for(int i = 0; i < conVoxels.size(); i++) {
-	// 	cout<<"Connected Component #"<<i+1<<" : size = "<<conVoxels[i].size()<<endl;
-	// }
 }
 
 int main(int argc, char * argv[]) {
