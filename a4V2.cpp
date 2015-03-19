@@ -59,7 +59,6 @@ void input(){
 	}
 }
 
-//There is some memory leak in this function...
 void connectVoxels() {
 	conVoxels.clear();
 	unordered_map<Point3D, int> voxelMap;
@@ -75,44 +74,51 @@ void connectVoxels() {
 			vector<Point3D> v;
 			queue<int> q;
 			q.push(voxelMap[voxels[i]]);
+			voxelVisited[voxels[i]] = true;
 			while(!q.empty()) {
 				Point3D p = voxels[q.front()];
 				// cout<<q.front()<<endl;
 				v.push_back(p);
-				voxelVisited[p] = true;
+				// voxelVisited[p] = true;
 				q.pop();
 				if(voxelMap.find(Point3D(p.x-1, p.y, p.z)) != voxelMap.end() && !voxelVisited[Point3D(p.x-1, p.y, p.z)]) {
 					q.push(voxelMap[Point3D(p.x-1, p.y, p.z)]);
+					voxelVisited[Point3D(p.x-1, p.y, p.z)] = true;
 				}
 				if(voxelMap.find(Point3D(p.x+1, p.y, p.z)) != voxelMap.end() && !voxelVisited[Point3D(p.x+1, p.y, p.z)]) {
 					q.push(voxelMap[Point3D(p.x+1, p.y, p.z)]);
+					voxelVisited[Point3D(p.x+1, p.y, p.z)] = true;
 				}
 				if(voxelMap.find(Point3D(p.x, p.y-1, p.z)) != voxelMap.end() && !voxelVisited[Point3D(p.x, p.y-1, p.z)]) {
 					q.push(voxelMap[Point3D(p.x, p.y-1, p.z)]);
+					voxelVisited[Point3D(p.x, p.y-1, p.z)] = true;
 				}
 				if(voxelMap.find(Point3D(p.x, p.y+1, p.z)) != voxelMap.end() && !voxelVisited[Point3D(p.x, p.y+1, p.z)]) {
 					q.push(voxelMap[Point3D(p.x, p.y+1, p.z)]);
+					voxelVisited[Point3D(p.x, p.y+1, p.z)] = true;
 				}
 				if(voxelMap.find(Point3D(p.x, p.y, p.z-1)) != voxelMap.end() && !voxelVisited[Point3D(p.x, p.y, p.z-1)]) {
 					q.push(voxelMap[Point3D(p.x, p.y, p.z-1)]);
+					voxelVisited[Point3D(p.x, p.y, p.z-1)] = true;
 				}
 				if(voxelMap.find(Point3D(p.x, p.y, p.z+1)) != voxelMap.end() && !voxelVisited[Point3D(p.x, p.y, p.z+1)]) {
 					q.push(voxelMap[Point3D(p.x, p.y, p.z+1)]);
+					voxelVisited[Point3D(p.x, p.y, p.z+1)] = true;
 				}
 			}
 			conVoxels.push_back(v);
 		}
 	}
-	for(int i = 0; i < conVoxels.size(); i++) {
-		cout<<"Connected Component #"<<i+1<<" : "<<endl;
-		for(int j = 0; j < conVoxels[i].size(); j++) {
-			cout<<conVoxels[i][j].x<<" "<<conVoxels[i][j].y<<" "<<conVoxels[i][j].z<<endl;
-		}
-	}
-	cout<<"No. of connected components = "<<conVoxels.size()<<endl;
-	for(int i = 0; i < conVoxels.size(); i++) {
-		cout<<"Connected Component #"<<i+1<<" : size = "<<conVoxels[i].size()<<endl;
-	}
+	// for(int i = 0; i < conVoxels.size(); i++) {
+	// 	cout<<"Connected Component #"<<i+1<<" : "<<endl;
+	// 	for(int j = 0; j < conVoxels[i].size(); j++) {
+	// 		cout<<conVoxels[i][j].x<<" "<<conVoxels[i][j].y<<" "<<conVoxels[i][j].z<<endl;
+	// 	}
+	// }
+	// cout<<"No. of connected components = "<<conVoxels.size()<<endl;
+	// for(int i = 0; i < conVoxels.size(); i++) {
+	// 	cout<<"Connected Component #"<<i+1<<" : size = "<<conVoxels[i].size()<<endl;
+	// }
 }
 
 int main(int argc, char * argv[]) {
