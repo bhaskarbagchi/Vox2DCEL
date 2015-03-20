@@ -92,6 +92,31 @@ namespace std {
 	};
 }
 
+class DCELvertex;
+class DCELedge;
+class DCELface;
+
+class DCELvertex {
+public:
+	Point3D coordinates;
+	DCELedge * 	leaving;
+};
+
+class DCELedge {
+public:
+	Point3D origin;
+	DCELedge * twin;
+	DCELedge * next;
+	DCELedge * prev;
+	DCELface * face;
+};
+
+class DCELface {
+public:
+	DCELedge * edge;
+	Normal normalTo;
+};
+
 typedef vector<Point3D> VPoint3D;
 typedef vector<VPoint3D> VVPoint3D; // 6Neighbourhood Connected voxels list
 
@@ -262,9 +287,7 @@ void ZaxisScan(){
 		}
 
 	}
-
 }
-
 int main(int argc, char * argv[]) {
 	input();
 	//connectVoxels();
