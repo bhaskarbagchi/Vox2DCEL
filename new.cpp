@@ -59,7 +59,7 @@ public:
 	DCELedge * globalPrev;
 };
 
-static noFaces;
+static int noFaces;
 
 class DCELface {
 public:
@@ -135,62 +135,80 @@ DCELedge* addEdgeDCEL(Point3D x , Point3D y , DCELedge * prev = NULL, DCELedge *
 	DCELedge *edgelist = globalDCEL.edges;
 	DCELedge *previous=NULL;
 	while(edgelist !=NULL){
-		if(edgelist.origin == x && edgelist.twin.origin == y)
+		if(edgelist->origin == x && edgelist->twin->origin == y)
 			break;
 		previous = edgelist;
-		edgelist =edgelist.globalNext;
+		edgelist =edgelist->globalNext;
 	}
 
 	if(edgelist==NULL){
 
 		DCELedge *tmp1 = new DCELedge();
 		DCELedge *tmp2 = new DCELedge(); 
-		tmp1.origin = x;
-		tmp2.origin = y;
-		tmp1.twin = tmp2;
-		tmp2.twin = tmp1;
+		tmp1->origin = x;
+		tmp2->origin = y;
+		tmp1->twin = tmp2;
+		tmp2->twin = tmp1;
 		
 		if(previous!=NULL)
-			previous.globalNext = tmp1;
+			previous->globalNext = tmp1;
 		else
 			globalDCEL.edges = tmp1;
-		tmp1.globalNext = tmp2;
-		tmp2.globalNext = NULL;
-		tmp2.globalPrev = tmp1;
-		tmp1.globalPrev = previous;
+		tmp1->globalNext = tmp2;
+		tmp2->globalNext = NULL;
+		tmp2->globalPrev = tmp1;
+		tmp1->globalPrev = previous;
 
 		edgelist = tmp1;
 	}
 	
-	edgelist.next = next;
-	edgelist.prev = prev;
+	edgelist->next = next;
+	edgelist->prev = prev;
 	if(next!=NULL)
-		next.prev = edgelist;
+		next->prev = edgelist;
 	if(prev!=NULL)
-		prev.next = edgelist;
+		prev->next = edgelist;
 
 	return edgelist;
 }
 
-DCELface * addFaceDCEL(int x, DCELedge *edge){
-	DCELface * facelist = globalDCEL.facelist;
-	
-	DCELface * tmp = new DCELface();
-	tmp.FaceId = id;
-	tmp.edge = edge;
-	tmp.globalPrev = NULL;
-	tmp.globalNext = NULL;
+bool DeleteEdge(){
+}
+bool DeleteFace(){
+}
 
-	if(facelist==NULL){
-		globalDCEL.facelist = tmp;
-		return tmp;
-	}
-	while(facelist.globalNext!=NULL){
-		facelist = facelist.globalNext;
-	}
-	facelist.globalNext = tmp;
-	tmp.globalPrev = facelist;
+DCELface * addFaceDCEL(int id, DCELedge *edge){
+
+	DCELface * tmp = new DCELface();
+	tmp->FaceId = id;
+	tmp->edge = edge;
+	tmp->globalPrev = NULL;
+	tmp->globalNext = NULL;
+
 	return tmp;
+}
+
+DCELface * mergeFace(DCELface *f, Point3D p){
+	return NULL; 
+}
+
+DCELface * mergeFace(DCELface *f, DCELface *f1){
+	return NULL;
+	DCELedge *e1 = f->edge;
+	DCELedge *e2 = f1->edge;
+	
+	DCELedge *tmp1,*tmp2;
+	tmp1= e1;
+	
+	do{
+		tmp2 = e2;
+		do{
+			// Logic here 
+			
+			tmp2 = tmp2->next;
+		}while(tmp2!=e2);
+		tmp1 = tmp1->next;
+	}while(tmp1!=e1);
 }
 
 void scanZ() {
@@ -199,36 +217,36 @@ void scanZ() {
 		unordered_map<Point3D, bool> voxelVisited;
 		for(int i = 1; i <= maxX - minX; i++) {
 			for(int j = 1; j <= maxY - minY; j++) {
-				if(voxelMap[Point3D(i, j, z)] != voxelMap.end() && !voxelVisited[Point3D(i, j, z)]) {
+				if(voxelMap.find(Point3D(i, j, z)) != voxelMap.end() && !voxelVisited[Point3D(i, j, z)]) {
 					voxelVisited[Point3D(i, j, z)] = true;
-					if(voxelMap[Point3D(i, j, z+1)] != voxelMap.end()) {
+					if(voxelMap.find(Point3D(i, j, z+1)) != voxelMap.end()) {
 						DCELedge * e1 = addEdgeDCEL(Point3D(i, j, z+1), Point3D(i+1, j, z+1));
 						DCELedge * e2 = addEdgeDCEL(Point3D(i+1, j, z+1), Point3D(i+1, j+1, z+1),e1);
-						DCELedge * e3 = addEdgeDCEL(Point3D(i+1, j+1, z+1), Point3D(i, j+1, z+1).e2);
+						DCELedge * e3 = addEdgeDCEL(Point3D(i+1, j+1, z+1), Point3D(i, j+1, z+1),e2);
 						DCELedge * e4 = addEdgeDCEL(Point3D(i, j+1, z+1), Point3D(i, j, z+1),e3,e1);
 						noFaces++;
-						DCELface * f = addFaceDCEL(noFaces, e);
+						DCELface * f = addFaceDCEL(noFaces, e1);
 
 						queue<Point3D> q;
 						q.push(Point3D(i, j, z));
 						while(!q.empty()) {
 							Point3D p = q.front();
 							q.pop();
-							if(voxelMap[Point3D(p.x, p.y, p.z+1)] != voxelMap.end()) {
+							if(voxelMap.find(Point3D(p.x, p.y, p.z+1)) != voxelMap.end()) {
 								f = mergeFace(f, p);
-								if(voxelMap[Point3D(i+1, j, z)] != voxelMap.end()) {
+								if(voxelMap.find(Point3D(i+1, j, z)) != voxelMap.end()) {
 									voxelVisited[Point3D(i+1, j, z)] = true;
 									q.push(Point3D(i+1, j, z));
 								}
-								if(voxelMap[Point3D(i-1, j, z)] != voxelMap.end()) {
+								if(voxelMap.find(Point3D(i-1, j, z)) != voxelMap.end()) {
 									voxelVisited[Point3D(i-1, j, z)] = true;
 									q.push(Point3D(i-1, j, z));
 								}
-								if(voxelMap[Point3D(i, j+1, z)] != voxelMap.end()) {
+								if(voxelMap.find(Point3D(i, j+1, z)) != voxelMap.end()) {
 									voxelVisited[Point3D(i, j+1, z)] = true;
 									q.push(Point3D(i, j+1, z));
 								}
-								if(voxelMap[Point3D(i, j-1, z)] != voxelMap.end()) {
+								if(voxelMap.find(Point3D(i, j-1, z)) != voxelMap.end()) {
 									voxelVisited[Point3D(i, j-1, z)] = true;
 									q.push(Point3D(i, j-1, z));
 								}
@@ -244,9 +262,9 @@ void scanZ() {
 		unordered_map<Point3D, bool> voxelVisited;
 		for(int i = 1; i <= maxX - minX; i++) {
 			for(int j = 1; j <= maxY - minY; j++) {
-				if(voxelMap[Point3D(i, j, z)] != voxelMap.end() && !voxelVisited[Point3D(i, j, z)]) {
+				if(voxelMap.find(Point3D(i, j, z)) != voxelMap.end() && !voxelVisited[Point3D(i, j, z)]) {
 					voxelVisited[Point3D(i, j, z)] = true;
-					if(voxelMap[Point3D(i, j, z-1)] != voxelMap.end()) {
+					if(voxelMap.find(Point3D(i, j, z-1)) != voxelMap.end()) {
 						DCELedge * e = addEdgeDCEL(Point3D(i, j, z), Point3D(i+1, j, z));
 						addEdgeDCEL(Point3D(i+1, j, z), Point3D(i+1, j+1, z));
 						addEdgeDCEL(Point3D(i+1, j+1, z), Point3D(i, j+1, z));
@@ -259,21 +277,21 @@ void scanZ() {
 						while(!q.empty()) {
 							Point3D p = q.front();
 							q.pop();
-							if(voxelMap[Point3D(p.x, p.y, p.z-1)] != voxelMap.end()) {
+							if(voxelMap.find(Point3D(p.x, p.y, p.z-1)) != voxelMap.end()) {
 								f = mergeFace(f, p);
-								if(voxelMap[Point3D(i+1, j, z)] != voxelMap.end()) {
+								if(voxelMap.find(Point3D(i+1, j, z)) != voxelMap.end()) {
 									voxelVisited[Point3D(i+1, j, z)] = true;
 									q.push(Point3D(i+1, j, z));
 								}
-								if(voxelMap[Point3D(i-1, j, z)] != voxelMap.end()) {
+								if(voxelMap.find(Point3D(i-1, j, z)) != voxelMap.end()) {
 									voxelVisited[Point3D(i-1, j, z)] = true;
 									q.push(Point3D(i-1, j, z));
 								}
-								if(voxelMap[Point3D(i, j+1, z)] != voxelMap.end()) {
+								if(voxelMap.find(Point3D(i, j+1, z)) != voxelMap.end()) {
 									voxelVisited[Point3D(i, j+1, z)] = true;
 									q.push(Point3D(i, j+1, z));
 								}
-								if(voxelMap[Point3D(i, j-1, z)] != voxelMap.end()) {
+								if(voxelMap.find(Point3D(i, j-1, z)) != voxelMap.end()) {
 									voxelVisited[Point3D(i, j-1, z)] = true;
 									q.push(Point3D(i, j-1, z));
 								}
@@ -284,7 +302,6 @@ void scanZ() {
 			}
 		}
 	}
-
 
 }
 
@@ -340,6 +357,6 @@ void scanZ() {
 int main(int argc, char * argv[]) {
 	noFaces = 0;
 	input();
-	connectVoxels();
+	//connectVoxels();
 	return 0;
 }
