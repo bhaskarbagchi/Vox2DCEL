@@ -33,7 +33,6 @@ namespace std {
 		}
 	};
 }
-static int noFaces;
 
 class DCELvertex;
 class DCELedge;
@@ -57,6 +56,8 @@ public:
 	DCELedge * globalNext;
 	DCELedge * globalPrev;
 };
+
+static int noFaces;
 
 class DCELface {
 public:
@@ -168,9 +169,11 @@ DCELedge* addEdgeDCEL(Point3D x , Point3D y , DCELedge * prev = NULL, DCELedge *
 	return edgelist;
 }
 
-DCELface * addFaceDCEL(int id, DCELedge *edge) {
+bool DeleteFace(){
+}
+
+DCELface * addFaceDCEL(int id, DCELedge *edge){
 	DCELface * facelist = globalDCEL.face;
-	
 	DCELface * tmp = new DCELface();
 	tmp->FaceId = id;
 	tmp->edge = edge;
@@ -360,7 +363,6 @@ void scanZ() {
 		}
 	}
 
-
 }
 
 // void connectVoxels() {
@@ -415,7 +417,5 @@ void scanZ() {
 int main(int argc, char * argv[]) {
 	noFaces = 0;
 	input();
-	scanZ();
-	// connectVoxels();
 	return 0;
 }
