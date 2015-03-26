@@ -7,7 +7,7 @@ public:
 	int x;
 	int y;
 	int z;
-	Point3D(){}
+	Point3D(){x=y=z=0;}
 	Point3D(int _x, int _y, int _z) : x(_x), y(_y), z(_z){}
 
 	bool operator<(const Point3D &pt) const {
@@ -141,12 +141,12 @@ DCELedge* addEdgeDCEL(Point3D x , Point3D y , DCELedge * prev = NULL, DCELedge *
 	if(edgelist==NULL) {
 
 		DCELedge * tmp1 = new DCELedge();
-		DCELedge * tmp2 = new DCELedge(); 
+		DCELedge * tmp2 = new DCELedge();
 		tmp1->origin = x;
 		tmp2->origin = y;
 		tmp1->twin = tmp2;
 		tmp2->twin = tmp1;
-		
+
 		if(previous!=NULL)
 			previous->globalNext = tmp1;
 		else
@@ -158,7 +158,7 @@ DCELedge* addEdgeDCEL(Point3D x , Point3D y , DCELedge * prev = NULL, DCELedge *
 
 		edgelist = tmp1;
 	}
-	
+
 	edgelist->next = next;
 	edgelist->prev = prev;
 	if(next!=NULL)
@@ -169,8 +169,45 @@ DCELedge* addEdgeDCEL(Point3D x , Point3D y , DCELedge * prev = NULL, DCELedge *
 	return edgelist;
 }
 
-bool DeleteFace(){
+bool DeleteFace(DCEL &dcel, DCELface *face){
+	DCELface *facelist = dcel.face;
+	if(facelist == face){
+		dcel.face = facelist->globalNext;
+		if(facelist->globalNext!=NULL)
+			facelist->globalNext->globalPrev = NULL;
+		delete facelist;
+		return true;
+	}
+	while(facelist!=NULL){
+		if(facelist == face){
+			if(facelist->globalNext!=NULL){
+				facelist->globalNext->globalPrev = facelist->globalPrev;
+			}
+			facelist->globalPrev->globalNext = facelist->globalNext;
+			delete facelist;
+			return true;
+		}
+		facelist = facelist->globalNext;
+	}
+	return false;
 }
+
+DCELface * faceListEnd(DCELface *face){
+	if(face==NULL)
+		return face;
+	while(face->globalNext!=NULL)
+		face = face->globalNext;
+	return face;
+}
+
+DCELedge * edgeListEnd(DCELedge *edge){
+	if(edge==NULL)
+		return edge;
+	while(edge->globalNext!=NULL)
+		edge = edge->globalNext;
+	return edge;
+}
+
 
 DCELface * addFaceDCEL(int id, DCELedge *edge){
 	DCELface * facelist = globalDCEL.face;
@@ -199,7 +236,7 @@ bool deleteEdge(DCELedge * e) {
 		delete(e);
 		return true;
 	}
-	while(edgelist = NULL) {
+	while(edgelist == NULL) {
 		if(edgelist == e) {
 			e->globalPrev->globalNext = e->globalNext;
 			e->globalNext->globalPrev = e->globalPrev;
@@ -217,9 +254,9 @@ DCELface * mergeFace(DCELface * f, Point3D v, int level) {
 	Point3D c(v.x+1, v.y+1, v.z+level);
 	Point3D d(v.x, v.y+1, v.z+level);
 
-	DCELedge * e = f->edge->next;
+	DCELedge * e = f->edge;
 	DCELedge * start = f->edge;
-	while(e!=start) {
+	 do {
 		if(e->origin == a && e->twin->origin == d) {
 			DCELedge * prev = e->prev;
 			DCELedge * next = e->next;
@@ -265,12 +302,12 @@ DCELface * mergeFace(DCELface * f, Point3D v, int level) {
 			e3->face = f;
 		}
 		e = e->next;
-	}
+	}while(e!=start);
 	return f;
 }
 
 void scanZ() {
-	
+
 	for(int z = 1; z <= maxZ - minZ; z++) {
 		unordered_map<Point3D, bool> voxelVisited;
 		for(int i = 1; i <= maxX - minX; i++) {
