@@ -25,7 +25,7 @@ public:
 	bool operator==(const Point3D &pt) const {
 		return x == pt.x && y == pt.y && z == pt.z;
 	}
-	
+
 	void printData(){
 		cout<<x<<" "<<y<<" "<<z<<" ";
 	}
@@ -37,7 +37,7 @@ public:
 	Point3D p;
 	Vertex(){id=-1;};
 	Vertex(int _id ,Point3D _p){id=_id; p = _p;}
-	
+
 	bool operator<(const Vertex &pt) const {
 		if(p<pt.p)
 			return true;
@@ -89,7 +89,7 @@ public:
 	int FaceId;
 	DCELface * globalNext;
 	DCELface * globalPrev;
-	
+
 	DCELface(){}
 	DCELface(int _id, DCELedge *e){
 		FaceId = _id;
@@ -97,7 +97,7 @@ public:
 		globalNext = NULL;
 		globalPrev = NULL;
 	}
-	
+
 };
 
 class DCEL{
@@ -153,7 +153,7 @@ void input(){
 	}
 	minX = _minX, minY = _minY, minZ = _minZ;
 	maxX = _maxX, maxY = _maxY, maxZ = _maxZ;
-	
+
 	//cout<<minX<<" "<<maxX<<" "<<minY<<" "<<maxY<<" "<<minZ<<" "<<maxZ<<endl;
 }
 
@@ -286,10 +286,10 @@ DCELface * mergeFace(DCELface * f1,DCELface *f2) {
 		tmp->face = f1;
 		tmp = tmp->next;
 	}while(tmp!=e2);
-	
+
 	// go back till no faces common
 	bool flag = false;
-	
+
 	do{
 		if(e1==tmp->twin){
 			e2 = tmp;
@@ -297,15 +297,15 @@ DCELface * mergeFace(DCELface * f1,DCELface *f2) {
 		}
 		tmp = tmp->next;
 	}while(!flag && tmp!=e2);
-	
+
 	while(e1 ==e2->twin){
 		e1 = e1->prev;
 		e2 = e2->next;
 	}
-	
+
 	s1 = e1;
 	s2 = e2;
-	
+
 	// find First Matching
 	do{
 		flag = false;
@@ -317,7 +317,7 @@ DCELface * mergeFace(DCELface * f1,DCELface *f2) {
 			}
 			tmp = tmp->next;
 		}while(!flag && tmp!=e2);
-		
+
 		if(flag){
 			t1= e1;
 			t2 = e2 = tmp;
@@ -327,17 +327,17 @@ DCELface * mergeFace(DCELface * f1,DCELface *f2) {
 			}
 			t1->prev->next = t2->next;
 			t2->next->prev = t1->prev;
-			
+
 			e2->prev->next = e1->next;
-			e1->next->prev = e2->prev; 
-			
+			e1->next->prev = e2->prev;
+
 			f1->edge = e1->next;
 			// Delete edges from t1 to e1 both included
-			
+
 			break;
 		}
 		e1 = e1->next;
-		//this_thread::sleep_for (chrono::seconds(2));	
+		//this_thread::sleep_for (chrono::seconds(2));
 	}while(e1!=s1 && flag!=true);
 	return f1;
 }
@@ -493,7 +493,7 @@ void scanZ() {
 							Point3D p = q.front();
 							q.pop();
 							if(voxelMap.find(Point3D(p.x, p.y, p.z-1)) == voxelMap.end()) {
-								
+
 								DCELedge * e1 = addEdgeDCEL(Point3D(p.x, p.y, p.z), Point3D(p.x+1, p.y, p.z));
 								DCELedge * e2 = addEdgeDCEL(Point3D(p.x+1, p.y, p.z), Point3D(p.x+1, p.y+1, p.z), e1);
 								DCELedge * e3 = addEdgeDCEL(Point3D(p.x+1, p.y+1, p.z), Point3D(p.x, p.y+1, p.z), e2);
@@ -782,18 +782,76 @@ void scanX() {
 // 	}
 // }
 
+bool checkEdgeEquality(DCELedge* e){
+	int x1,x2,x3;
+	int y1,y2,y3;
+	int z1,z2,z3;
+
+	x1 = e->origin.x;
+	y1 = e->origin.y;
+	z1 = e->origin.z;
+
+	x2 = e->next->origin.x;
+	y2 = e->next->origin.y;
+	z2 = e->next->origin.z;
+
+	x3 = e->next->next->origin.x;
+	y3 = e->next->next->origin.y;
+	z3 = e->next->next->origin.z;
+
+	if(x1==x2 && x2==x3){
+		if(y1==y2 && y2==y3)
+			return true;
+		else if(z1==z2 && z2==z3)
+			return true;
+	}
+	if(y1==y2 && y1==y3){
+		if(x1==x2 && x2==x3)
+			return true;
+		if(z1==z2 && z2==z3)
+			return true;
+	}
+	return false;
+}
+
+/*void reduceEdges(DCEL &dcel){
+	DCELface *face = dcel.face;
+	DCELedge *e,*s;
+
+	// Creating vertexSet with Ids
+	while(face!=NULL){
+		e = s = face->edge;
+		do{
+			if(checkEdgeEquality(e)){
+				cout<<"return true\n";
+				if(e->next==s){
+					s->prev = e->prev;
+					e->prev->next = s;
+					e = e->next;
+				}
+				e->next = e->next->next;
+				e->next->next->prev = e;
+				//can delete e;
+			}
+			else
+				e=e->next;
+		}while(e!=s);
+		face = face->globalNext;
+	}
+}*/
+
 void DCEL2OBJ(DCEL &dcel){
 	set<Vertex> vertexSet;
 	int index = 1;
-	
+
 	DCELface *face = dcel.face;
 	DCELedge *e,*s;
 	Vertex v;
 	set<Vertex>::iterator it;
-	
+
 	fstream fout;
 	fout.open ("out.obj", fstream::out);
-	
+
 	// Creating vertexSet with Ids
 	while(face!=NULL){
 		e = s = face->edge;
@@ -809,8 +867,8 @@ void DCEL2OBJ(DCEL &dcel){
 			e = e->next;
 		}while(e!=s);
 		face = face->globalNext;
-	} 
-	
+	}
+
 	face = dcel.face;
 	while(face!=NULL){
 		e = s = face->edge;
@@ -835,6 +893,7 @@ int main(int argc, char * argv[]) {
 	scanY();
 	scanX();
 	// printFace(globalDCEL);
+	// reduceEdges(globalDCEL);
 	DCEL2OBJ(globalDCEL);
 	return 0;
 }
