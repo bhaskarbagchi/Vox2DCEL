@@ -90,7 +90,7 @@ public:
 	DCELface * globalNext;
 	DCELface * globalPrev;
 
-	DCELface(){}
+	DCELface();
 	DCELface(int _id, DCELedge *e){
 		FaceId = _id;
 		edge = e;
@@ -105,13 +105,34 @@ public:
 	DCELvertex * vertices;
 	DCELedge *edges;
 	DCELface *face;
+	DCELedge *edgeEnd;
+	DCELface *faceEnd;
 	DCEL(){
 		vertices=NULL;
 		edges = NULL;
 		face = NULL;
+		edgeEnd =NULL;
+		faceEnd = NULL;
 	}
 
 };
+typedef DCELedge* EdgePtr;
+
+class MapVertex{
+public:
+	Point3D p;
+	mutable vector<EdgePtr> edges;
+	bool operator<(const MapVertex &pt) const {
+		if(p<pt.p)
+			return true;
+		return false;
+	}
+
+	bool operator==(const MapVertex &pt) const {
+		return p==pt.p;
+	}
+};
+set<MapVertex> edgeVertexs;
 
 DCEL globalDCEL_x, globalDCEL_y, globalDCEL_z;
 DCEL globalDCEL_x_rev, globalDCEL_y_rev, globalDCEL_z_rev;
@@ -156,40 +177,108 @@ void input() {
 }
 
 DCELedge* addEdgeDCEL(DCEL &dcel, Point3D x , Point3D y , DCELedge * prev = NULL, DCELedge *next =NULL){
-	DCELedge * edgelist = dcel.edges;
-	DCELedge * previous=NULL;
-	while(edgelist !=NULL) {
-		if(edgelist->origin == x && edgelist->twin->origin == y)
-			break;
-		previous = edgelist;
-		edgelist =edgelist->globalNext;
+	MapVertex v,v2;
+	v.p = x;
+	v2.p = y;
+	DCELedge *e=NULL;
+	//x.printData();y.printData();
+	//cout<<endl;
+	pair<set<MapVertex>::iterator,bool> ret,ret2;
+	set<MapVertex>::iterator it,it2;
+	ret.second = ret2.second = false;
+	it = edgeVertexs.find(v);
+	if(it==edgeVertexs.end()){
+		ret = edgeVertexs.insert(v);
+		it = ret.first;
 	}
-	if(edgelist==NULL) {
-		DCELedge * tmp1 = new DCELedge();
-		DCELedge * tmp2 = new DCELedge();
-		tmp1->origin = x;
-		tmp2->origin = y;
-		tmp1->twin = tmp2;
-		tmp2->twin = tmp1;
-
-		if(previous!=NULL)
-			previous->globalNext = tmp1;
-		else
-			dcel.edges = tmp1;
-
-		tmp1->globalNext = tmp2;
-		tmp2->globalNext = NULL;
-		tmp2->globalPrev = tmp1;
-		tmp1->globalPrev = previous;
-		edgelist = tmp1;
+	it2 = edgeVertexs.find(v2);
+	if(it2==edgeVertexs.end()){
+		ret2 = edgeVertexs.insert(v2);
+		it2 = ret2.first;
 	}
-	edgelist->next = next;
-	edgelist->prev = prev;
+	if(!ret.second && !ret2.second){
+		//cout<<"Inside Match"<<endl;
+		int size = (*it).edges.size();
+		for(int i=0;i<size;i++){
+			if((*it).edges[i]->twin->origin == y){
+				DCELedge *e = (*it).edges[i];
+				e->next = next;
+				e->prev = prev;
+				if(next!=NULL)
+					next->prev = e;
+				if(prev!=NULL)
+					prev->next = e;
+				return e;
+			}
+		}
+	}
+	//cout<<(*it).edges.size()<<" "<<(*it2).edges.size();
+	//cout<<endl;
+	//cout<<"New Edge Added\n";
+	DCELedge * tmp1 = new DCELedge();
+	DCELedge * tmp2 = new DCELedge();
+	tmp1->origin = x;
+	tmp2->origin = y;
+	tmp1->twin = tmp2;
+	tmp2->twin = tmp1;
+
+	if(dcel.edgeEnd !=NULL){
+		dcel.edgeEnd->globalNext = tmp1;
+	}
+	else{
+		dcel.edges = tmp1;
+	}
+	tmp1->globalNext = tmp2;
+	tmp2->globalNext = NULL;
+	tmp2->globalPrev = tmp1;
+	tmp1->globalPrev = dcel.edgeEnd;
+	dcel.edgeEnd = tmp2;
+
+	tmp1->next = next;
+	tmp1->prev = prev;
 	if(next!=NULL)
-		next->prev = edgelist;
+		next->prev = tmp1;
 	if(prev!=NULL)
-		prev->next = edgelist;
-	return edgelist;
+		prev->next = tmp1;
+
+	(*it).edges.push_back(tmp1);
+	(*it2).edges.push_back(tmp2);
+
+	return tmp1;
+	//DCELedge * edgelist = dcel.edges;
+	//DCELedge * previous=NULL;
+	//while(edgelist !=NULL) {
+		//if(edgelist->origin == x && edgelist->twin->origin == y)
+			//break;
+		//previous = edgelist;
+		//edgelist =edgelist->globalNext;
+	//}
+	//if(edgelist==NULL) {
+		//DCELedge * tmp1 = new DCELedge();
+		//DCELedge * tmp2 = new DCELedge();
+		//tmp1->origin = x;
+		//tmp2->origin = y;
+		//tmp1->twin = tmp2;
+		//tmp2->twin = tmp1;
+
+		//if(previous!=NULL)
+			//previous->globalNext = tmp1;
+		//else
+			//dcel.edges = tmp1;
+
+		//tmp1->globalNext = tmp2;
+		//tmp2->globalNext = NULL;
+		//tmp2->globalPrev = tmp1;
+		//tmp1->globalPrev = previous;
+		//edgelist = tmp1;
+	//}
+	//edgelist->next = next;
+	//edgelist->prev = prev;
+	//if(next!=NULL)
+		//next->prev = edgelist;
+	//if(prev!=NULL)
+		//prev->next = edgelist;
+	//return edgelist;
 }
 
 bool DeleteFace(DCEL &dcel, DCELface *face) {
@@ -327,6 +416,7 @@ void printFace(DCEL &dcel) {
 }
 
 void scanZ() {
+	edgeVertexs.clear();
 	cout<<"In scan z"<<endl;
 	int f_id = 1;
 	for(int z = minZ; z <= maxZ; z++) {
@@ -376,6 +466,7 @@ void scanZ() {
 			}
 		}
 	}
+	edgeVertexs.clear();
 	cout<<"Scan z reverse"<<endl;
 	for(int z = maxZ; z >= minZ; z--) {
 		unordered_map<Point3D, bool> voxelVisited;
@@ -428,6 +519,7 @@ void scanZ() {
 }
 
 void scanY() {
+	edgeVertexs.clear();
 	cout<<"In scan y"<<endl;
 	int f_id = 1;
 	for(int y = minY; y <= maxY; y++) {
@@ -477,6 +569,7 @@ void scanY() {
 			}
 		}
 	}
+	edgeVertexs.clear();
 	cout<<"Scan y reverse"<<endl;
 	for(int y = maxY; y >= minY; y--) {
 		unordered_map<Point3D, bool> voxelVisited;
@@ -578,6 +671,7 @@ void scanX() {
 			}
 		}
 	}
+	edgeVertexs.clear();
 	cout<<"Scan x reverse"<<endl;
 	for(int x = maxX; x >= minX; x--) {
 		unordered_map<Point3D, bool> voxelVisited;
@@ -625,7 +719,7 @@ void scanX() {
 				}
 			}
 		}
-	}	
+	}
 	cout<<"Scan x completed"<<endl;
 }
 
@@ -747,5 +841,6 @@ int main(int argc, char * argv[]) {
 	DCEL2OBJ(globalDCEL_z, fout, vertexSet);
 	DCEL2OBJ(globalDCEL_z_rev, fout, vertexSet);
 	fout.close();
+	cout<<"VertexSet size = "<<vertexSet.size()<<endl;
 	return 0;
 }
