@@ -695,13 +695,13 @@ void scanX() {
 								DCELface * f1 = new DCELface(0,e1);
 								e1->face = e2->face = e3->face = e4->face = f1;
 								f = mergeFace(f, f1);
-								if(voxelMap.find(Point3D(p.x+1, p.y, p.z)) != voxelMap.end() && !voxelVisited[Point3D(p.x+1, p.y, p.z)]) {
-									voxelVisited[Point3D(p.x+1, p.y, p.z)] = true;
-									q.push(Point3D(p.x+1, p.y, p.z));
+								if(voxelMap.find(Point3D(p.x, p.y+1, p.z)) != voxelMap.end() && !voxelVisited[Point3D(p.x, p.y+1, p.z)]) {
+									voxelVisited[Point3D(p.x, p.y+1, p.z)] = true;
+									q.push(Point3D(p.x, p.y+1, p.z));
 								}
-								if(voxelMap.find(Point3D(p.x-1, p.y, p.z)) != voxelMap.end() && !voxelVisited[Point3D(p.x-1, p.y, p.z)]) {
-									voxelVisited[Point3D(p.x-1, p.y, p.z)] = true;
-									q.push(Point3D(p.x-1, p.y, p.z));
+								if(voxelMap.find(Point3D(p.x, p.y-1, p.z)) != voxelMap.end() && !voxelVisited[Point3D(p.x, p.y-1, p.z)]) {
+									voxelVisited[Point3D(p.x, p.y-1, p.z)] = true;
+									q.push(Point3D(p.x, p.y-1, p.z));
 								}
 								if(voxelMap.find(Point3D(p.x, p.y, p.z+1)) != voxelMap.end() && !voxelVisited[Point3D(p.x, p.y, p.z+1)]) {
 									voxelVisited[Point3D(p.x, p.y, p.z+1)] = true;
